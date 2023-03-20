@@ -1,0 +1,108 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:include="include/common/header::html"></div>
+    <link rel="stylesheet" type="text/css" href="./static/css/login/default.css">
+    <link rel="stylesheet" type="text/css" href="./static/css/login/styles.css">
+    <link href="./static/css/login/login.css" rel="stylesheet" />
+    <script>
+        $(function() {
+            var data4Vue = {
+                user4Register: {account: "", password: "", email: "", country: "", name: "", phone: "", purpose: ""}
+            };
+
+            var vue = new Vue({
+                el: "#app",
+                data: data4Vue,
+                mounted: function() {
+                    $("#register-name").get(0).select();
+                },
+                methods: {
+                    loginKeyDown: function(e) {
+                        if (e.keyCode == 13) {
+                            this.login();
+                        }
+                    },
+                    login: function() {
+                        window.location.href = "loginPageUser";
+                    },
+                    register: function() {
+                        if (!vue.user4Register.account || !vue.user4Register.password || !vue.user4Register.email || !vue.user4Register.country || !vue.user4Register.name || !vue.user4Register.phone || !vue.user4Register.purpose) {
+                            myzui._error("必填参数不能为空");
+                            return;
+                        }
+                        if (vue.user4Register.password != vue.user4Register.repeatpassword) {
+                            myzui._error("重复密码不一致");
+                            return;
+                        }
+                        var url = "registerUser";
+                        axios.post(url, vue.user4Register).then(function(res) {
+                            var data = res.data;
+                            if (data.code == "0") {
+                                myzui._success("注册成功，请等待管理员审核");
+                                setTimeout(() => {
+                                    location.href = "loginPageUser"
+                                }, 2000);
+                            } else {
+                                myzui._error(data.msg);
+                            }
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+<div id="app" class="wrap login_wrap">
+    <div class="index">
+        <a href="admin">
+            <div class="logo" style="height: 50px;">
+            </div>
+        </a>
+        <div class="login_box">
+            <div class="login_form">
+                <div class="login_title">
+                    系统后台
+                </div>
+                <div class="login_title">
+                    用户注册
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" id="register-name" placeholder="用户名" v-model="user4Register.account" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" placeholder="邮箱" v-model="user4Register.email" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" placeholder="国家" v-model="user4Register.country" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" placeholder="姓名" v-model="user4Register.name" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" placeholder="联系方式" v-model="user4Register.phone" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="text" placeholder="用途" v-model="user4Register.purpose" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="password" placeholder="登录密码" v-model="user4Register.password" />
+                </div>
+                <div class="form_text_ipt">
+                    <input type="password" placeholder="确认密码" v-model="user4Register.repeatpassword" />
+                </div>
+                <div class="form_btn">
+                    <button @click="register">注册</button>
+
+                </div>
+                <div class="form_reg_btn">
+                     <a href="javascript:void(0);" @click="login" style="display:inline-block;float:left;margin-right: 20px;">登录</a>
+                    <a href="admin" target="_blank" style="display:inline-block;float:left;margin-right:20px;">管理员端</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

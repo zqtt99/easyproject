@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<div th:include="include/common/header::html"></div>
+	<script src="./static/js/common/component-pager.js"></script>
+	<link href="./static/css/common/common.css" rel="stylesheet" />
+</head>
+<script>
+$(function() {
+	var data4Vue = {
+		items: [],
+		item4Add: {id: 0, name: "", password: ""},
+		pagination: {},
+		keyword: "",
+		isLoading: false,
+		isEditShow: false,
+        isEdit: false,
+		editTitle: "",
+		size: 15
+	};
+	
+	var vue = new Vue({
+		el: "#app",
+		data: data4Vue,
+		mounted: function() {
+			this.list(1);
+		},
+		methods: {
+			//根据页数获取数据
+			list(start) {
+				var _this = this;
+				_this.isLoading = true;
+				//传入参数：页码，关键词，一页记录大小
+				var url = "admins?start=" + start + "&keyword=" + _this.keyword + "&size=" + _this.size;
+				axios.get(url).then(function(res) {
+					_this.pagination = res.data;
+					_this.items = res.data.list;
+					_this.isLoading = false;
+				});
+			},
+			//重置
+			reset: function() {
+				var _this = this;
+				$("#keyword").val("");
+				_this.keyword = $("#keyword").val();
+				_this.list(1);
+			},
+			//搜索
+			search: function() {
+				var _this = this;
+				_this.keyword = $("#keyword").val();
+				if (_this.keyword) {
+					_this.list(1);
+				}
+			},
+			//取消按钮
+			cancel: function() {
+				this.isEditShow = false;
+			},
+			//新增按钮
+			add() {
+				this.isEditShow = true;
+				this.editTitle = "新建";
+				this.item4Add = {id: 0, name: "", password: ""};
+                this.isEdit = false;
+			},
+			//修改按钮
+			update(item) {
+                this.editTitle = "修改";
+				this.item4Add.id = item.id;
+				this.item4Add.name = item.name;
+				this.item4Add.password = item.password;
+				this.isEditShow = true;
+                this.isEdit = true;
+			},
+			//删除按钮
+			deleteItem(id) {
+				myzui.confirm("确认删除？", function() {
+					var url = "admins/" + id;
+					axios.delete(url).then(function(res) {
+						myzui._success("删除成功");
+						vue.list(1);
+					});
+				});
+			},
+			//保存按钮
+			save() {
+				if (!vue.item4Add.name || !vue.item4Add.password) {
+					myzui._error("必填参数不能为空");
+					return;
+				}
+				var url = "admins";
+				if (vue.item4Add.id == 0) {//新增
+					axios.post(url, vue.item4Add).then(function(res) {
+						if (res.data.code == 0) {
+							vue.list(1);
+							vue.item4Add = {id: 0, name: "", password: ""};
+							vue.isEditShow = false;
+							myzui._success("新增成功");
+						} else {
+							myzui._error(res.data.msg);
+						}
+					});
+				} else {//修改
+					axios.put(url, vue.item4Add).then(function(res) {
+						if (res.data.code == 0) {
+							vue.list(1);
+							vue.item4Add = {id: 0, name: "", password: ""};
+							vue.isEditShow = false;
+							myzui._success("修改成功");
+						} else {
+							myzui._error("修改失败");
+						}
+					});
+				}
+			}
+		}
+	});
+});
+</script>
+<body>
+<div id="app">
+	<div class="col-md-12 content table-content load-indicator" :class="isLoading?'loading':''" data-loading="正在加载">
+		<div class="panel">
+			<div class="panel-heading">
+				<div class="top-div">
+					<div class="input-group search-div">
+						<input type="text" class="form-control" id="keyword" placeholder="请输入关键词">
+						<span class="input-group-btn">
+							<button class="btn btn-primary" @click="search">搜索</button>
+							<button class="btn btn-default" @click="reset">重置</button>
+							<button class="btn btn-success" @click="add">新增</button>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="panel-body">
+				<div style="height:100%;overflow:auto;">
+					<table class="table table-hover table-striped" style="margin:0px;">
+						<thead>
+							<tr>
+								<th>用户名</th>
+                                <th>操作</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-if="items && items.length > 0" v-for="item in items">
+								<td>{{item.name}}</td>
+								<td>
+									<button class="btn btn-xs btn-primary" @click="update(item)">编辑</button>
+								</td>
+							</tr>
+							<tr v-if="items && items.length == 0">
+								<td colspan="20" align="center" style="text-align:center;">暂无数据</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="panel-footer">
+				<!-- 分页组件开始 -->
+				<component-pager v-bind.sync="pagination" v-on:list="list"></component-pager>
+				<!-- 分页组件结束 -->
+			</div>
+		</div>
+	</div>
+	<!-- 新增开始 -->
+	<div class="edit-panel-div" :class="isEditShow?'active':''">
+		<div class="edit-panel-div-title">
+			{{editTitle}}
+			<i class="icon icon-times" @click="cancel"></i>
+		</div>
+		<div class="edit-panel-div-content form-horizontal">
+			<div class="form-group">
+				<label class="col-sm-3 required">用户名</label>
+				<div class="col-sm-9">
+					<input class="form-control" :disabled="isEdit" v-model="item4Add.name" placeholder="用户名" />
+				</div>
+			</div>
+            <div class="form-group">
+                <label class="col-sm-3 required">密码</label>
+                <div class="col-sm-9">
+                    <input class="form-control" v-model="item4Add.password" type="password" placeholder="密码" />
+                </div>
+            </div>-
+		</div>
+		<div class="edit-panel-div-footer">
+			<button class="btn btn-success" @click="save">保存</button>
+			<button class="btn btn-default" @click="cancel">取消</button>
+		</div>
+	</div>
+	<div class="edit-panel-div-shim" @click="cancel" :class="isEditShow?'active':''"></div>
+	<!-- 新增结束 -->
+</div>
+</body>
+</html>

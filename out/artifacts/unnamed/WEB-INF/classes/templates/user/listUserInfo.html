@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<div th:include="include/common/header::html"></div>
+	<script src="./static/js/common/component-pager.js"></script>
+	<link href="./static/css/common/common.css" rel="stylesheet" />
+</head>
+<script>
+$(function() {
+    var data4Vue = {
+        info: {account: "", email: "", country: "", name: "", phoen: "", purpose: ""},//个人信息对象
+        editFlag: false//判断是否是编辑状态的标志
+    };
+
+    var vue = new Vue({
+        el: "#app",
+        data: data4Vue,
+        mounted: function() {//vue加载成功后进行初始化的方法
+            this.initMyInfo();//初始化个人信息
+        },
+        methods: {
+            //初始化个人信息
+            initMyInfo() {
+                var url = "currentUser";
+                axios.get(url).then(function(res) {
+                    vue.info = res.data.data;
+                });
+            },
+            //编辑按钮
+            edit() {
+                this.editFlag = true;
+            },
+            //取消按钮
+            cancel() {
+                this.editFlag = false;
+            },
+            //保存按钮
+            submit() {
+                if (!this.info.account || !this.info.password || !this.info.email || !this.info.country || !this.info.name || !this.info.phone || !this.info.purpose) {
+                    myzui._error("必填参数不能为空");
+                    return;
+                }
+                var url = "userInfos";
+                axios.put(url, vue.info).then(function(res) {
+                    if (res.data.code == 0) {
+                        vue.initMyInfo();
+                        myzui._success("修改成功");
+                        vue.editFlag = false;
+                    } else {
+                        myzui._error("修改失败");
+                    }
+                });
+            }
+        }
+    });
+});
+</script>
+<body>
+<div id="app">
+    <div class="panel" style="margin:0 auto;width:60%;">
+        <div class="panel-heading">用户信息</div>
+        <div class="panel-body">
+            <div class="form-horizontal" style="text-align:center;">
+                <div class="form-group">
+                    <label class="col-sm-3 required">用户名</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" readonly placeholder="用户名"  v-model="info.account" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 required">邮箱</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" :readonly="editFlag?false:'readonly'" placeholder="邮箱" v-model="info.email" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 required">国家</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" :readonly="editFlag?false:'readonly'" placeholder="国家"  v-model="info.country" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 required">姓名</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" :readonly="editFlag?false:'readonly'" placeholder="姓名"  v-model="info.name" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 required">联系方式</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" :readonly="editFlag?false:'readonly'" placeholder="联系方式"  v-model="info.phone" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 required">用途</label>
+                    <div class="col-sm-6">
+                        <input class="form-control" :readonly="editFlag?false:'readonly'" placeholder="用途"  v-model="info.purpose" />
+                    </div>
+                </div>
+            </div>
+            <div class="panel-footer" style="background-color:#fff;">
+                <button class="btn btn-primary" @click="edit" v-show="!editFlag">编辑</button>
+                <button class="btn btn-success" @click="submit" v-show="editFlag">保存</button>
+                <button class="btn" @click="cancel" v-show="editFlag">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
